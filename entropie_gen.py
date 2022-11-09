@@ -1,7 +1,7 @@
 from itertools import product
 
 with open("cuvinte_wordle.txt", "r") as wordleList:
-    sAux = wordle_list.read()
+    sAux = wordleList.read()
     lQueryWords = [str(x) for x in sAux.split()]
 wordleList.close()
 
@@ -12,8 +12,8 @@ def read_permutation_file():
 
     The feedback is returned by the function as a list
     """
-    with open("rez_query.txt", "r") as :
-        sAux = rez_query.read()
+    with open("rez_query.txt", "r") as rezQuery:
+        sAux = rezQuery.read()
         lPermutation = [int(x) for x in sAux.split()]
 
     return lPermutation
@@ -24,15 +24,15 @@ def generate_entropy_dictionary():
     information said word would return if chosen as a query
     """
 
-permutari = []
+lPermutations = []
 
 
 L = read_permutation_file()
 print(L)
 
-def wordInformation(word):
+def word_information(word):
 
-    generateEntropyDictionary()
+    generate_entropy_dictionary()
 
     return
 
@@ -41,16 +41,14 @@ def wordInformation(word):
 
     #TODO ceva
 
-
-
-permutari = list(product('\U00002B1C\U0001F7E8\U0001F7E9', repeat=5))
+lPermutations = list(product('012', repeat=5))
 #for x in cuvinte:
    # for i in range (243):
     #    for j in range (5):
      #        aux = i
      #        permutari=aux%3
      #        aux=aux//3   
-print(permutari)
+print(lPermutations)
 print('\U00002B1C')
 print('\U0001F7E8')
 print('\U0001F7E9')
