@@ -1,9 +1,9 @@
 import random
+import entropie_gen
 
 with open("cuvinte_wordle.txt", "r") as wordleList:
     text = wordleList.read()
     lWords = [str(x) for x in text.split()]
-wordleList.close()
   
 sGuessWord = random.choice(lWords)
 
@@ -11,14 +11,13 @@ def write_permutation_file():
     with open("rez_query.txt", "w") as rezQuery:
         for x in lQueryPermutation:
             rezQuery.write(str(x) + ' ')
-    rezQuery.close()
 
 
 lGuessWord = list(sGuessWord)
 print(lGuessWord)
 lUserInput = []
 lAllUserInputs = []
-lQueryPermutation = [2, 2, 2, 2, 2]
+lQueryPermutation = [0,0,0,0,0]
 
 cnt = 0
 
@@ -30,30 +29,31 @@ while lUserInput != lGuessWord:
         continue
     lAllUserInputs.append(sUserInput)
     cnt += 1
-    # litera pe aceeasi pozitie 🟩
-    # litera nu e in pozitia corecta 🟨
-    # litera nu exista ⬜
+    # litera pe aceeasi pozitie 🟩 -> \U0001F7E9
+    # litera nu e in pozitia corecta 🟨 -> \U0001F7E8
+    # litera nu exista ⬜ -> \U00002B1C
 
     #array cu cifre bazat pe ce intoarce query-ul
-    # 0 -> aceeasi pozitie
+    # 2 -> aceeasi pozitie
     # 1 -> undeva in cuvant
-    # 2 -> nu este
+    # 0 -> nu este
     
 
     print(" ".join(lUserInput))
     
     for i in range(5):
         if lUserInput[i] == lGuessWord[i]:
-            lQueryPermutation[i] = 0
-            print('🟩', end='')
+            lQueryPermutation[i] = 2
+            print('\U0001F7E9', end='')
         elif lUserInput[i] in lGuessWord:
             lQueryPermutation[i] = 1
-            print('🟨', end='')
+            print('\U0001F7E8', end='')
         else:
-            lQueryPermutation[i] = 2
-            print('⬜', end='')
+            lQueryPermutation[i] = 0
+            print('\U00002B1C', end='')
     print()
     write_permutation_file()
+    entropie_gen.word_information()
 else: 
     print("Ai gasit") 
 
@@ -65,5 +65,3 @@ with open("rezultate.txt", "w") as rezultate:
     for x in lAllUserInputs:
         rezultate.write(str(x) + " ")
     #rezultate.write(str(x) for x in lAllUserInputs)
-
-
