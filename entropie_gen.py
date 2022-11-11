@@ -38,12 +38,13 @@ lPermutations = list(product('012', repeat=5))
 def word_entropy(strargWord):
     finalEntropy = 0.0
     word_prob = 0.0
-    
-    
-    """
         
-
+    for tPerm in lPermutations:
+        sPossibleQueries = set()
+        var_word_information = 0.0
+        #TODO filtru mai bun pentru permutari
         for strWord in lQueryWords:
+            
             for i in range(5):
                 if int(tPerm[i]) == 2:
                     if strargWord[i] != strWord[i]:
@@ -52,18 +53,13 @@ def word_entropy(strargWord):
                     if strargWord[i] in strWord:
                         break
                 if int(tPerm[i]) == 1:
-                    if strargWord[i] not in strWord:
+                    if (strargWord[i] not in strWord) or (strargWord[i] == strWord[i]):
                         break
             else:
                 #break
                 sPossibleQueries.add(strWord)
 
-    """
-    for tPerm in lPermutations:
-        sPossibleQueries = set(lQueryWords)
-        #print(tPerm)
-        var_word_entropy = 0.0
-
+        """
         for i in range(5):
             if int(tPerm[i]) == 2:
                 #verde
@@ -78,19 +74,29 @@ def word_entropy(strargWord):
                 for strWord in lQueryWords:
                     if strargWord[i] not in strWord:
                         sPossibleQueries.discard(strWord)
-        
+        """
         
         #print(len(sPossibleQueries))
         #print([str(x) for x in sPossibleQueries])
         #print(str(len(sPossibleQueries)) + ' ' + str(len(lQueryWords)))
-        word_prob = round(len(sPossibleQueries) / len(lQueryWords),4)
-        #print(word_prob)
+        if (len(sPossibleQueries) != 0):
+            word_prob = len(lQueryWords) / len(sPossibleQueries) 
+            #print(tPerm)    
+        print(word_prob)
+        
+        if(tPerm == ('2', '2', '2', '2', '2')):
+            print(*sPossibleQueries)
+
         try:
-            var_word_entropy -= word_prob*math.log(word_prob,2)
+            var_word_information = round((1/word_prob)*math.log2(word_prob),7)
+            
         except ValueError:
             pass
-        finalEntropy += var_word_entropy
-    
+        print(var_word_information)
+        print(tPerm)
+        print()
+        finalEntropy += var_word_information
+
     #print(finalEntropy)
     return finalEntropy
 
@@ -111,24 +117,22 @@ if __name__=="__main__":
 
     tStart = time.perf_counter()
     
-    pool = multiprocessing.Pool(cpuCount)
+    #pool = multiprocessing.Pool(cpuCount)
     
-    dEntropy = pool.map(dictionary_entropy, range(0,500))
-    pool.close()
-    pool.join()
+    #dEntropy = pool.map(dictionary_entropy, range(0, 150))
+    #pool.close()
+    #pool.join()
 
     print("Done!")
     
 
     tStop = time.perf_counter()
     print(tStop - tStart)
-
     """
     with open("entropie_cuvinte.txt", "w") as entropyDictionary:
-        for i in range(0, 500):
+        for i in range(0, 150):
             entropyDictionary.write(lQueryWords[i] + ' ' + str(dEntropy[i]) + '\n')
     """
-
-#print(word_entropy("TAREI"))
+print(word_entropy("ACEEA"))
 
 #print(lPermutations)
