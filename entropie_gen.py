@@ -2,40 +2,60 @@ from itertools import product
 import math
 import multiprocessing
 import time
+from functools import partial
 
 with open("cuvinte_wordle.txt", "r") as wordleList:
     sAux = wordleList.read()
     lQueryWords = [str(x) for x in sAux.split()]
 wordleList.close()
 
-
 #lPossibleQueries = lQueryWords
-dEntropy = {}
+lEntropy = []
 
 def read_permutation_file():
-    """
-    Reads the rez_query.txt file, in which 5 digits are written,
-    describing the wordle game's response to the last given query
-
-    The feedback is returned by the function as a list
-    """
     with open("rez_query.txt", "r") as rezQuery:
         strAux = rezQuery.read()
-        lPermutation = [int(x) for x in strAux.split()]
+        lPermutation = [x for x in strAux.split()]
+        strWord = lPermutation[0]
+        lPermutation = lPermutation[1:]
 
-    return lPermutation
+    return strWord, lPermutation
 
-L = read_permutation_file()
+def truncate_list(strQueryWord, largPermutation, largWords):
+
+    sReturn = set(largWords)
+
+    for i in range(5):
+        if int(largPermutation[i]) == 2:
+            #verde
+            for strWord in lQueryWords:
+                if strWord[i] != strQueryWord[i]:
+                    sReturn.discard(strWord)
+        if int(largPermutation[i]) == 0:
+            for strWord in lQueryWords:
+                if strQueryWord[i] in strWord:
+                    sReturn.discard(strWord)
+        if int(largPermutation[i]) == 1:
+            for strWord in lQueryWords:
+                if strQueryWord[i] not in strWord or strQueryWord[i] == strWord[i]:
+                    sReturn.discard(strWord)
+    
+    return list(sReturn)
+
+#strWord, L = read_permutation_file()
+#print(L)
+#print(strWord)
 lPermutations = list(product('012', repeat=5))
 #print(lPermutations[209])
 #print(L)
 
-def word_entropy(strargWord):
+def word_entropy(lArgWords, argInc):
     finalEntropy = 0.0
+    strargWord = lArgWords[argInc]
     word_prob = 0.0
         
     for tPerm in lPermutations:
-        sPossibleQueries = set(lQueryWords)
+        sPossibleQueries = set(lArgWords)
         var_word_information = 0.0
         
         """
@@ -64,15 +84,15 @@ def word_entropy(strargWord):
         for i in range(5):
             if int(tPerm[i]) == 2:
                 #verde
-                for strWord in lQueryWords:
+                for strWord in lArgWords:
                     if strWord[i] != strargWord[i]:
                         sPossibleQueries.discard(strWord)
             if int(tPerm[i]) == 0:
-                for strWord in lQueryWords:
+                for strWord in lArgWords:
                     if strargWord[i] in strWord:
                         sPossibleQueries.discard(strWord)
             if int(tPerm[i]) == 1:
-                for strWord in lQueryWords:
+                for strWord in lArgWords:
                     if strargWord[i] not in strWord or strargWord[i] == strWord[i]:
                         sPossibleQueries.discard(strWord)
     
@@ -84,7 +104,7 @@ def word_entropy(strargWord):
             word_prob = len(sPossibleQueries) / len(lQueryWords) 
             #print(tPerm)    
             #print(word_prob)
-            var_word_information = -round((word_prob)*math.log2(word_prob),7)
+            var_word_information = -(word_prob)*math.log2(word_prob)
             #print(*tPerm, end="    ")
             #print(var_word_information, end= "    ")
             #print(len(sPossibleQueries))
@@ -92,6 +112,8 @@ def word_entropy(strargWord):
         #print(tPerm)
         #print()
         finalEntropy += var_word_information
+
+
 
     #print(finalEntropy)
     return finalEntropy
@@ -101,24 +123,37 @@ def word_entropy(strargWord):
 # (va rugam sa ne strangeti mana)
 if __name__=="__main__":
 
-    cpuCount = multiprocessing.cpu_count()
+    cpuCount = multiprocessing.cpu_count() 
 
     tStart = time.perf_counter()
-    pool = multiprocessing.Pool(cpuCount)
     
-    dEntropy = pool.map(word_entropy, lQueryWords[:100])
+    pool = multiprocessing.Pool(cpuCount - 4)
+    strWord, lPermutation = read_permutation_file()
+    lTruncatedList = truncate_list(strWord, lPermutation, lQueryWords)
+    print(*lTruncatedList)
+    #while(read_permutation_file[1].count(2) != 5):
+    lEntropy = pool.map(partial(word_entropy, lTruncatedList), range(len(lTruncatedList)))
     pool.close()
     pool.join()
+    maxEntropy = 0
+    for i in range(len(lEntropy)):
+        if lEntropy[i] > maxEntropy:
+            maxEntropy = lEntropy[i]
+            strNextQuery = lTruncatedList[i]
+    with open("cuvan_query.txt", "w") as cuv_query:
+        cuv_query.write(strNextQuery)
+
+
+    
 
     print("Done!")
     
 
     tStop = time.perf_counter()
-    print(tStop - tStart)
+    print(tStop - tStart) 
     
+    """
     with open("entropie_cuvinte.txt", "w") as entropyDictionary:
         for i in range(0, 100):
-            entropyDictionary.write(lQueryWords[i] + ' ' + str(dEntropy[i]) + '\n')
-#print(word_entropy("HOBBY"))
-
-#print(lPermutations)
+            entropyDictionary.write(lQueryWords[i] + ' ' + str(lEntropy[i]) + '\n')
+    """
