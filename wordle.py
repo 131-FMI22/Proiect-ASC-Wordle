@@ -195,7 +195,7 @@ ok = 1
 
 # WORDLE SOLVER
 tStart = time.time()
-for strWord in lWords[:100]:
+for strWord in lWords:
     
     # urmatoarele doua linii de cod sunt improvizate maxim
     # nu intelegem de ce __mp_main__ are treaba cu zona asta
@@ -228,19 +228,19 @@ for strWord in lWords[:100]:
         # 0 -> nu este
         
 
-        print(" ".join(lUserInput))
+        #print(" ".join(lUserInput))
         
         for i in range(5):
             if lUserInput[i] == lGuessWord[i]:
                 lQueryPermutation[i] = 2
-                print('\U0001F7E9', end='')
+                #print('\U0001F7E9', end='')
             elif lUserInput[i] in lGuessWord:
                 lQueryPermutation[i] = 1
-                print('\U0001F7E8', end='')
+                #print('\U0001F7E8', end='')
             else:
                 lQueryPermutation[i] = 0
-                print('\U00002B1C', end='')
-        print()
+                #print('\U00002B1C', end='')
+        #print()
 
         # single processing
         #print(os.getpid())
@@ -284,23 +284,23 @@ for strWord in lWords[:100]:
         #write_permutation_file()
         #entropie_gen.word_information()
     else: 
-        print("Ai gasit") 
+        print(f"Ai gasit {strGuessWord}") 
 
-    #print(f"Felicitari, dragule! Ai luat sfantul 5 la A$C, din {cnt} incercari.")
+    #print(f"Felicitari, dragule! Ai luat sfantul 5 la A$C, din {cnt} iancercari.")
     #print(f"Istoricul query-urilor tale este: {lAllUserInputs}")
 
-    with open("rezultate.txt", "a") as rezultate:
-        rezultate.write(strGuessWord + " ")
+    with open("solutii.txt", "a") as solutii:
+        solutii.write(strGuessWord + " ")
         for strAux in lAllUserInputs:
-            rezultate.write(strAux + " ")
-        rezultate.write("\n")
-    rezultate.close()
+            solutii.write(strAux + " ")
+        solutii.write("\n")
+    solutii.close()
 
     cntFinal += cnt
 
 
 if __name__ == "__main__":
     print(time.time() - tStart)
-    medieRezolvari = cntFinal / 100
+    medieRezolvari = cntFinal / len(lWords)
 
     print(f"Programul nostru ghiceste cuvantul in {medieRezolvari} incercari!")
