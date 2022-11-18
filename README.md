@@ -1,6 +1,6 @@
 # Proiect-ASC-Wordle
 
-Nimic interesant de citit aici momentan.
+Media de guess-uri din care programul nostru gaseste un cuvant este 4.373581
 
 De aici am preluat snippet-uri de cod:
 
