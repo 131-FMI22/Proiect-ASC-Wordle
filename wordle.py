@@ -18,6 +18,8 @@ with open("cuvinte_wordle.txt", "r") as wordleList:
 # POST FILE PARSING VARIABLE DECLARATION
 
 lRemainingList = lWords.copy()
+strGuessWord = random.choice(lWords)
+lGuessWord = list(strGuessWord)
 
 # FUNCTIONS
 
@@ -84,36 +86,18 @@ def word_entropy(lArgWords):
             maxEntropy = finalEntropy
             strNextQuery = strargWord
 
-    return strNextQuery
+    q.put(strNextQuery)
+    q.join()
 
-# WORDLE SOLVER
+def wordle(strArgUserInput):
 
-# Primul query va fi TAREI, deoarece are cea mai mare entropie
-# din lista initiala de cuvinte. 
-#  
-# Pentru a consulta lista cu entropiile
-# pentru primul query, vedeti fisierul entropii_toata_lista.txt
+    lQueryPermutation = [0,0,0,0,0]
 
-strUserInput = "TAREI"
-lUserInput = list(strUserInput)
-lQueryPermutation = [0,0,0,0,0]
-
-print("Bine ati venit in jocul Wordle!")
-
-strGuessWord = random.choice(lWords)
-lGuessWord = list(strGuessWord)
-print(f"Pentru aceasta runda, cuvantul ales de jocul wordle este {strGuessWord}!")
-
-cnt = 0
-maxEntropy = 0
-
-while lUserInput != lGuessWord:
-
-    lUserInput = list(strUserInput)
-    print(f"Query-ul cu numarul {cnt + 1} este {strUserInput}!")
+    lUserInput = list(strArgUserInput)
+    print(f"Query-ul cu numarul {cnt + 1} este {strArgUserInput}!")
     print("In urma aplicarii, vom obtine:")
     print(*lUserInput)
-    lAllUserInputs.append(strUserInput)
+    lAllUserInputs.append(strArgUserInput)
     
     cnt += 1
     # litera pe aceeasi pozitie 🟩 -> \U0001F7E9
@@ -137,13 +121,57 @@ while lUserInput != lGuessWord:
             print('\U00002B1C', end='')
     print()
 
-    lRemainingList = truncate_list(strUserInput, lQueryPermutation, lRemainingList).copy()
-    strUserInput = word_entropy(lRemainingList)
+    lRemainingList = truncate_list(strArgUserInput, lQueryPermutation, lRemainingList).copy()
+
+    q.put(lRemainingList)
+    q.join()
+    wordleProcess.terminate()
+
+
+
+# WORDLE SOLVER
+
+# Primul query va fi TAREI, deoarece are cea mai mare entropie
+# din lista initiala de cuvinte. 
+#  
+# Pentru a consulta lista cu entropiile
+# pentru primul query, vedeti fisierul entropii_toata_lista.txt
+
+if __name__ == "__main__":
+
+    strUserInput = str("TAREI")
     lUserInput = list(strUserInput)
-else: 
+
+    print("Bine ati venit in jocul Wordle!")
+    print(f"Pentru aceasta runda, cuvantul ales de jocul wordle este {strGuessWord}!")
+
+    cnt = 0
+
+    print(__name__)
+
+    q = mp.JoinableQueue()
+
+    while lUserInput != lGuessWord:
+
+        wordleProcess = mp.Process(target=wordle, args=(strUserInput))
+
+        wordleProcess.start()
+        wordleProcess.join()
+
+        lRemainingList = q.get()
+        q.all_tasks_done()
+
+        entropyProcess = mp.Process(target=word_entropy, args=(lRemainingList))
+
+        entropyProcess.start()
+        entropyProcess.join()
+
+        strUserInput = q.get()
+        q.all_tasks_done()
+
     print(f"Ai gasit {strGuessWord}") 
     cnt += 1
     lAllUserInputs.append(strGuessWord)
 
-print(f"Felicitari, dragule! Ai luat sfantul 5 la A$C, din {cnt} incercari.")
-print(f"Istoricul query-urilor tale este: {lAllUserInputs}")
+    print(f"Felicitari, dragule! Ai luat sfantul 5 la A$C, din {cnt} incercari.")
+    print(f"Istoricul query-urilor tale este: {lAllUserInputs}")
