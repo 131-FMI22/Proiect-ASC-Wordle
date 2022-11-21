@@ -1,7 +1,7 @@
 # Proiect-ASC-Wordle
 
 
-## Tabela de Continuturi
+## Tabela de Continut
 
 - [Cum functioneaza](#cum-functioneaza)
 - [Creatori](#creatori)
@@ -25,20 +25,20 @@ Mai multe detalii pot fi gasite in fisierul wordle.py
 ## Creatori
 
 **Tudor Chitu**
-<https://github.com/tedi11>
-<tudor.chitu@s.unibuc.ro>
+- <https://github.com/tedi11>
+- <tudor.chitu@s.unibuc.ro>
 
 **Alexandru-Cristian Ingeaua**
-<https://github.com/ingeaua>
-<alexandru-cristian.ingeaua@s.unibuc.ro>
+- <https://github.com/ingeaua>
+- <alexandru-cristian.ingeaua@s.unibuc.ro>
 
 **Alexandru Miclea**
-<https://github.com/AlexandruMiclea>
-<alexandru.miclea@s.unibuc.ro>
+- <https://github.com/AlexandruMiclea>
+- <alexandru.miclea@s.unibuc.ro>
 
 **Andrei Popa**
-<https://github.com/HaiduculRo>
-<andrei.popa1@s.unibuc.ro>
+- <https://github.com/HaiduculRo>
+- <andrei.popa1@s.unibuc.ro>
 
 ## Referinte
 

@@ -17,13 +17,13 @@ with open("cuvinte_wordle.txt", "r") as wordleList:
     text = wordleList.read()
     lWords = [str(x) for x in text.split()]
 
-# POST FILE PARSING VARIABLE DECLARATION
-
-
-
 # FUNCTIONS
 
 def truncate_list(strargQueryWord, largPermutation, largWords):
+    """
+    Returneaza lista de cuvinte care pot fi folosite pentru 
+    urmatoarele query-uri.
+    """
 
     sReturn = set(largWords)
 
