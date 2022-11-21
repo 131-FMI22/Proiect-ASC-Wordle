@@ -2,12 +2,14 @@ import math
 import random
 import multiprocessing as mp
 from itertools import product
+import time
 
 # VARIABLE DECLARATION
 
 lWords = []
 lAllUserInputs = []
 lPermutations = list(product('012', repeat=5))
+cnt = 0
 
 # FILE PARSING
 
@@ -17,9 +19,7 @@ with open("cuvinte_wordle.txt", "r") as wordleList:
 
 # POST FILE PARSING VARIABLE DECLARATION
 
-lRemainingList = lWords.copy()
-strGuessWord = random.choice(lWords)
-lGuessWord = list(strGuessWord)
+
 
 # FUNCTIONS
 
@@ -48,8 +48,8 @@ def truncate_list(strargQueryWord, largPermutation, largWords):
     return lReturn
 
 
-def word_entropy(lArgWords):
-
+def word_entropy(lArgWords, q):
+    strNextQuery = ""
 
     maxEntropy = -1.0
     for strargWord in lArgWords:
@@ -87,19 +87,20 @@ def word_entropy(lArgWords):
             strNextQuery = strargWord
 
     q.put(strNextQuery)
-    q.join()
 
-def wordle(strArgUserInput):
+def wordle(strArgUserInput, largRemainingList, q):
 
+    lGuessWord = q.get()
+    cnt = q.get()
     lQueryPermutation = [0,0,0,0,0]
+    #print(f"{strGuessWord} {lGuessWord} {strArgUserInput}")
 
     lUserInput = list(strArgUserInput)
-    print(f"Query-ul cu numarul {cnt + 1} este {strArgUserInput}!")
+    print(f"Query-ul cu numarul {cnt} este {strArgUserInput}!")
     print("In urma aplicarii, vom obtine:")
     print(*lUserInput)
     lAllUserInputs.append(strArgUserInput)
     
-    cnt += 1
     # litera pe aceeasi pozitie 🟩 -> \U0001F7E9
     # litera nu e in pozitia corecta 🟨 -> \U0001F7E8
     # litera nu exista ⬜ -> \U00002B1C
@@ -121,13 +122,10 @@ def wordle(strArgUserInput):
             print('\U00002B1C', end='')
     print()
 
-    lRemainingList = truncate_list(strArgUserInput, lQueryPermutation, lRemainingList).copy()
+    lRemainingList = truncate_list(strArgUserInput, lQueryPermutation, largRemainingList).copy()
 
     q.put(lRemainingList)
-    q.join()
-    wordleProcess.terminate()
-
-
+    #q.join()
 
 # WORDLE SOLVER
 
@@ -139,39 +137,53 @@ def wordle(strArgUserInput):
 
 if __name__ == "__main__":
 
-    strUserInput = str("TAREI")
+    strUserInput = "TAREI"
     lUserInput = list(strUserInput)
+
+    lRemainingList = lWords.copy()
+    strGuessWord = random.choice(lWords)
+    lGuessWord = list(strGuessWord)
 
     print("Bine ati venit in jocul Wordle!")
     print(f"Pentru aceasta runda, cuvantul ales de jocul wordle este {strGuessWord}!")
 
-    cnt = 0
-
-    print(__name__)
-
     q = mp.JoinableQueue()
-
+    cnt = 1
     while lUserInput != lGuessWord:
+        
+        q.put(lGuessWord)
+        q.put(cnt)
+        lAllUserInputs.append(strUserInput)
 
-        wordleProcess = mp.Process(target=wordle, args=(strUserInput))
-
+        wordleProcess = mp.Process(target=wordle, args=(strUserInput,lRemainingList,q,))
+        cnt += 1
+        tStart = time.time()
         wordleProcess.start()
         wordleProcess.join()
+        wordleProcess.terminate()
+        tStop = time.time()
+
+        if tStop - tStart <= 1:
+            time.sleep(2)
 
         lRemainingList = q.get()
-        q.all_tasks_done()
+        #q.all_tasks_done()
 
-        entropyProcess = mp.Process(target=word_entropy, args=(lRemainingList))
+        entropyProcess = mp.Process(target=word_entropy, args=(lRemainingList,q,))
 
         entropyProcess.start()
         entropyProcess.join()
+        entropyProcess.terminate()
 
         strUserInput = q.get()
-        q.all_tasks_done()
-
-    print(f"Ai gasit {strGuessWord}") 
-    cnt += 1
-    lAllUserInputs.append(strGuessWord)
+        lUserInput = list(strUserInput)
+    else:
+        print(f"Query-ul cu numarul {cnt} este {strUserInput}!")
+        print("In urma aplicarii, vom obtine:")
+        print(*list(strUserInput))
+        print("\U0001F7E9\U0001F7E9\U0001F7E9\U0001F7E9\U0001F7E9")
+        print(f"Ai gasit {strGuessWord}") 
+        lAllUserInputs.append(strGuessWord)
 
     print(f"Felicitari, dragule! Ai luat sfantul 5 la A$C, din {cnt} incercari.")
     print(f"Istoricul query-urilor tale este: {lAllUserInputs}")
