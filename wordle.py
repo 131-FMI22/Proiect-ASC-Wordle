@@ -88,44 +88,6 @@ def word_entropy(lArgWords, q):
 
     q.put(strNextQuery)
 
-def wordle(strArgUserInput, largRemainingList, q):
-
-    lGuessWord = q.get()
-    cnt = q.get()
-    lQueryPermutation = [0,0,0,0,0]
-    #print(f"{strGuessWord} {lGuessWord} {strArgUserInput}")
-
-    lUserInput = list(strArgUserInput)
-    print(f"Query-ul cu numarul {cnt} este {strArgUserInput}!")
-    print("In urma aplicarii, vom obtine:")
-    print(*lUserInput)
-    lAllUserInputs.append(strArgUserInput)
-    
-    # litera pe aceeasi pozitie 🟩 -> \U0001F7E9
-    # litera nu e in pozitia corecta 🟨 -> \U0001F7E8
-    # litera nu exista ⬜ -> \U00002B1C
-
-    #array cu cifre bazat pe ce intoarce query-ul
-    # 2 -> aceeasi pozitie
-    # 1 -> undeva in cuvant
-    # 0 -> nu este
-    
-    for i in range(5):
-        if lUserInput[i] == lGuessWord[i]:
-            lQueryPermutation[i] = 2
-            print('\U0001F7E9', end='')
-        elif lUserInput[i] in lGuessWord:
-            lQueryPermutation[i] = 1
-            print('\U0001F7E8', end='')
-        else:
-            lQueryPermutation[i] = 0
-            print('\U00002B1C', end='')
-    print()
-
-    lRemainingList = truncate_list(strArgUserInput, lQueryPermutation, largRemainingList).copy()
-
-    q.put(lRemainingList)
-    #q.join()
 
 # WORDLE SOLVER
 
@@ -135,48 +97,69 @@ def wordle(strArgUserInput, largRemainingList, q):
 # Pentru a consulta lista cu entropiile
 # pentru primul query, vedeti fisierul entropii_toata_lista.txt
 
+strUserInput = ""
+lUserInput = list(strUserInput)
+
+lRemainingList = lWords.copy()
+strGuessWord = random.choice(lWords)
+lGuessWord = list(strGuessWord)
+
 if __name__ == "__main__":
 
-    strUserInput = "TAREI"
-    lUserInput = list(strUserInput)
-
-    lRemainingList = lWords.copy()
-    strGuessWord = random.choice(lWords)
-    lGuessWord = list(strGuessWord)
-
     print("Bine ati venit in jocul Wordle!")
-    print(f"Pentru aceasta runda, cuvantul ales de jocul wordle este {strGuessWord}!")
+    strAns = input("Doriti sa jucati cu modul hint? (y/n) ").lower()
+    varHelper = True if strAns == "y" else False
+    if varHelper == True:
+        print(f"Pentru aceasta runda, cuvantul ales de jocul wordle este {strGuessWord}!")
+        print(f"De asemenea, pentru a minimiza numarul de incercari, recomandam TAREI drept prim query!")
 
     q = mp.JoinableQueue()
-    cnt = 1
+    lQueryPermutation = [0,0,0,0,0]
+
     while lUserInput != lGuessWord:
-        
-        q.put(lGuessWord)
-        q.put(cnt)
-        lAllUserInputs.append(strUserInput)
 
-        wordleProcess = mp.Process(target=wordle, args=(strUserInput,lRemainingList,q,))
-        cnt += 1
-        tStart = time.time()
-        wordleProcess.start()
-        wordleProcess.join()
-        wordleProcess.terminate()
-        tStop = time.time()
+        strUserInput = input("Introduceti cuvantul: ").upper()
+        if strUserInput not in lWords:
+            print("Query-ul nu este valid!")
+            continue
 
-        if tStop - tStart <= 1:
-            time.sleep(2)
-
-        lRemainingList = q.get()
-        #q.all_tasks_done()
-
-        entropyProcess = mp.Process(target=word_entropy, args=(lRemainingList,q,))
-
-        entropyProcess.start()
-        entropyProcess.join()
-        entropyProcess.terminate()
-
-        strUserInput = q.get()
         lUserInput = list(strUserInput)
+        print("In urma aplicarii, vom obtine:")
+        print(*lUserInput)
+        lAllUserInputs.append(strUserInput)
+        
+        # litera pe aceeasi pozitie 🟩 -> \U0001F7E9
+        # litera nu e in pozitia corecta 🟨 -> \U0001F7E8
+        # litera nu exista ⬜ -> \U00002B1C
+
+        #array cu cifre bazat pe ce intoarce query-ul
+        # 2 -> aceeasi pozitie
+        # 1 -> undeva in cuvant
+        # 0 -> nu este
+        
+        for i in range(5):
+            if lUserInput[i] == lGuessWord[i]:
+                lQueryPermutation[i] = 2
+                print('\U0001F7E9', end='')
+            elif lUserInput[i] in lGuessWord:
+                lQueryPermutation[i] = 1
+                print('\U0001F7E8', end='')
+            else:
+                lQueryPermutation[i] = 0
+                print('\U00002B1C', end='')
+        print()
+
+        if varHelper == True:
+            lRemainingList = truncate_list(strUserInput, lQueryPermutation, lRemainingList).copy()
+
+            entropy_process = mp.Process(target=word_entropy, args=(lRemainingList, q,))
+            entropy_process.start()
+            entropy_process.join()
+
+            bestWord = q.get()
+            print(f"Urmatorul query pe care ar trebui sa il folosesti este {bestWord}!")
+            entropy_process.close()
+
     else:
         print(f"Query-ul cu numarul {cnt} este {strUserInput}!")
         print("In urma aplicarii, vom obtine:")
@@ -185,5 +168,5 @@ if __name__ == "__main__":
         print(f"Ai gasit {strGuessWord}") 
         lAllUserInputs.append(strGuessWord)
 
-    print(f"Felicitari, dragule! Ai luat sfantul 5 la A$C, din {cnt} incercari.")
+    print(f"Felicitari, dragule! Ai luat sfantul 5 la A$C, din {len(lAllUserInputs)} incercari.")
     print(f"Istoricul query-urilor tale este: {lAllUserInputs}")
