@@ -19,74 +19,79 @@ with open("cuvinte_wordle.txt", "r") as wordleList:
 
 # FUNCTIONS
 
-def truncate_list(strargQueryWord, largPermutation, largWords):
-    """
-    Returneaza lista de cuvinte care pot fi folosite pentru 
-    urmatoarele query-uri.
-    """
-
-    sReturn = set(largWords)
-
-    for i in range(5):
-        if int(largPermutation[i]) == 2:
-            #verde
-            for strWord in largWords:
-                if strWord[i] != strargQueryWord[i]:
-                    sReturn.discard(strWord)
-        if int(largPermutation[i]) == 0:
-            for strWord in largWords:
-                if strargQueryWord[i] in strWord:
-                    sReturn.discard(strWord)
-        if int(largPermutation[i]) == 1:
-            for strWord in largWords:
-                if strargQueryWord[i] not in strWord or strargQueryWord[i] == strWord[i]:
-                    sReturn.discard(strWord)
+def word_entropy(q):
+    lArgWords = lWords.copy()
+    bLoop = True
     
-    lReturn = list(sReturn)
-    lReturn.sort()
+    while bLoop:
+        if not q.empty():
 
-    return lReturn
+            sReturn = set(lArgWords)
+            largPermutation, strargQueryWord = q.get() 
 
+            if largPermutation == [2,2,2,2,2]:
+                bLoop = False
+                mp.current_process().close()
+                continue
 
-def word_entropy(lArgWords, q):
-    strNextQuery = ""
-
-    maxEntropy = -1.0
-    for strargWord in lArgWords:
-        finalEntropy = 0.0
-        word_prob = 0.0
-        
-        for tPerm in lPermutations:
-            sPossibleQueries = set(lArgWords)
-            var_word_information = 0.0
-            
-            #ALGORITM 2 
-            
             for i in range(5):
-                if int(tPerm[i]) == 2:
+                if int(largPermutation[i]) == 2:
+                    #verde
                     for strWord in lArgWords:
-                        if strWord[i] != strargWord[i]:
-                            sPossibleQueries.discard(strWord)
-                if int(tPerm[i]) == 0:
+                        if strWord[i] != strargQueryWord[i]:
+                            sReturn.discard(strWord)
+                if int(largPermutation[i]) == 0:
                     for strWord in lArgWords:
-                        if strargWord[i] in strWord:
-                            sPossibleQueries.discard(strWord)
-                if int(tPerm[i]) == 1:
+                        if strargQueryWord[i] in strWord:
+                            sReturn.discard(strWord)
+                if int(largPermutation[i]) == 1:
                     for strWord in lArgWords:
-                        if strargWord[i] not in strWord or strWord[i] == strargWord[i]:
-                            sPossibleQueries.discard(strWord)
-        
+                        if strargQueryWord[i] not in strWord or strargQueryWord[i] == strWord[i]:
+                            sReturn.discard(strWord)
             
-            if (len(sPossibleQueries) != 0):
-                word_prob = len(sPossibleQueries) / len(lArgWords) 
-                var_word_information = -(word_prob)*math.log2(word_prob)
-            finalEntropy += var_word_information
-        
-        if (finalEntropy > maxEntropy):
-            maxEntropy = finalEntropy
-            strNextQuery = strargWord
+            lReturn = list(sReturn)
+            lReturn.sort()
+            lArgWords = lReturn.copy()
 
-    q.put(strNextQuery)
+            strNextQuery = ""
+
+            maxEntropy = -1.0
+            for strargWord in lArgWords:
+                finalEntropy = 0.0
+                word_prob = 0.0
+                
+                for tPerm in lPermutations:
+                    sPossibleQueries = set(lArgWords)
+                    var_word_information = 0.0
+                    
+                    #ALGORITM 2 
+                    
+                    for i in range(5):
+                        if int(tPerm[i]) == 2:
+                            for strWord in lArgWords:
+                                if strWord[i] != strargWord[i]:
+                                    sPossibleQueries.discard(strWord)
+                        if int(tPerm[i]) == 0:
+                            for strWord in lArgWords:
+                                if strargWord[i] in strWord:
+                                    sPossibleQueries.discard(strWord)
+                        if int(tPerm[i]) == 1:
+                            for strWord in lArgWords:
+                                if strargWord[i] not in strWord or strWord[i] == strargWord[i]:
+                                    sPossibleQueries.discard(strWord)
+                
+                    
+                    if (len(sPossibleQueries) != 0):
+                        word_prob = len(sPossibleQueries) / len(lArgWords) 
+                        var_word_information = -(word_prob)*math.log2(word_prob)
+                    finalEntropy += var_word_information
+                
+                if (finalEntropy > maxEntropy):
+                    maxEntropy = finalEntropy
+                    strNextQuery = strargWord
+            print()
+            print(f"Ar trebui sa incerci si {strNextQuery}")
+    
 
 
 # WORDLE SOLVER
@@ -97,33 +102,34 @@ def word_entropy(lArgWords, q):
 # Pentru a consulta lista cu entropiile
 # pentru primul query, vedeti fisierul entropii_toata_lista.txt
 
-strUserInput = ""
-lUserInput = list(strUserInput)
-
-lRemainingList = lWords.copy()
-strGuessWord = random.choice(lWords)
-lGuessWord = list(strGuessWord)
-
 if __name__ == "__main__":
 
+    strUserInput = ""
+    lUserInput = list(strUserInput)
+
+    lRemainingList = lWords.copy()
+    strGuessWord = random.choice(lWords)
+    lGuessWord = list(strGuessWord)
+
+    q = mp.JoinableQueue()
+    lQueryPermutation = [0,0,0,0,0]
     print("Bine ati venit in jocul Wordle!")
     strAns = input("Doriti sa jucati cu modul hint? (y/n) ").lower()
     varHelper = True if strAns == "y" else False
     if varHelper == True:
         print(f"Pentru aceasta runda, cuvantul ales de jocul wordle este {strGuessWord}!")
         print(f"De asemenea, pentru a minimiza numarul de incercari, recomandam TAREI drept prim query!")
-
-    q = mp.JoinableQueue()
-    lQueryPermutation = [0,0,0,0,0]
+        entropy_process = mp.Process(target=word_entropy, args=(q,))
+        entropy_process.start()
 
     while lUserInput != lGuessWord:
 
         strUserInput = input("Introduceti cuvantul: ").upper()
+        lUserInput = list(strUserInput)
         if strUserInput not in lWords:
             print("Query-ul nu este valid!")
             continue
-
-        lUserInput = list(strUserInput)
+        
         print("In urma aplicarii, vom obtine:")
         print(*lUserInput)
         lAllUserInputs.append(strUserInput)
@@ -149,22 +155,9 @@ if __name__ == "__main__":
                 print('\U00002B1C', end='')
         print()
 
-        if varHelper == True:
-            lRemainingList = truncate_list(strUserInput, lQueryPermutation, lRemainingList).copy()
-
-            entropy_process = mp.Process(target=word_entropy, args=(lRemainingList, q,))
-            entropy_process.start()
-            entropy_process.join()
-
-            bestWord = q.get()
-            print(f"Urmatorul query pe care ar trebui sa il folosesti este {bestWord}!")
-            entropy_process.close()
+        q.put((lQueryPermutation, strUserInput))
 
     else:
-        print(f"Query-ul cu numarul {cnt} este {strUserInput}!")
-        print("In urma aplicarii, vom obtine:")
-        print(*list(strUserInput))
-        print("\U0001F7E9\U0001F7E9\U0001F7E9\U0001F7E9\U0001F7E9")
         print(f"Ai gasit {strGuessWord}") 
         lAllUserInputs.append(strGuessWord)
 
