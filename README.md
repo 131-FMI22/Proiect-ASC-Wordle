@@ -11,7 +11,9 @@
 
 ## Cum functioneaza
 
-Programul nostru emuleaza interactiunea dintre jucator si jocul Wordle prin intermediul a doua procese.
+Programul nostru este o copie a jocului Wordle, asupra caruia putem initializa un proces separat care ne ofera hinturi.
+
+Hinturile sunt calculate folosind entropia lui Shannon pe o lista de cuvinte triata, in functie de ce ne returneaza ultimul query.
 
 Procesele comunica intre ele prin intermediul unui JoinableQueue, componenta a librariei multiprocessing.
 
